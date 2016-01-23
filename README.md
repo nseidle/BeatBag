@@ -1,9 +1,9 @@
 BeatBag - A Speed Bag Counter
 =======
 
-![BeatBag](https://cdn.sparkfun.com/assets/1/a/6/3/b/514dd074ce395f8561000002.JPG)  
-
 BeatBag is a speed bag counter that uses an accelerometer to counts the number hits. It's easily installed ontop of speed bag platform only needing an accelerometer attached to the top of platform. You don't have to alter the hitting surface or change out the swivel.
+
+![BeatBag on top of a speed bag platform](https://raw.githubusercontent.com/nseidle/BeatBag/master/Speed%20Bag%20Counter.JPG)  
 
 License Information
 -------------------
