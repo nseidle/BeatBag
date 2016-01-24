@@ -38,6 +38,10 @@
  12/19/15 - Segment burned out. Power down display after 10 minutes of non-use.
  Use I2C, see if we can avoid the 'multiply by 10' display problem.
 
+ 1/23/16 - Accel not reliable. Because the display is now also on the I2C but the pull-up resistors on the accel where
+ not enough. Swapped out to new accel. Added 100ohm inline resistors to accel and 4.7k resistors from SDA/SCL to 5V.
+ Reinforced connection from accel to RedBoard.
+
  */
 
 #include <avr/wdt.h> //We need watch dog for this program
