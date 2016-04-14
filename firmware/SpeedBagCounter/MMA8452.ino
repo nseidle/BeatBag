@@ -12,9 +12,10 @@
 
 #define GSCALE 4 // Sets full-scale range to +/-2, 4, or 8g. Used to calc real g values.
 
-#define MAXTIME 100 //Number of milliseconds before we give up
+#define MAXTIME 10 //Number of milliseconds before we give up. 100 worked well. 10 works well too.
 #define TIMEOUT_ERROR 255 //Return 255 on the case of error. Should work for functions that return bytes
 
+volatile unsigned int timeOutCounter = 0;
 
 //Checks the accelerometer and converts the readings to actual g values
 //Returns an array containing the float values.
@@ -23,14 +24,15 @@ float getAccelData()
   int accelCount[3];  // Stores the 12-bit signed value
   readAccelData(accelCount);  // Read the x/y/z adc values
   
-  /*Serial.print(" ");
+  Serial.print(millis());
+  Serial.print(",");
   Serial.print(accelCount[0]);
-  Serial.print(" ");
+  Serial.print(",");
   Serial.print(accelCount[1]);
-  Serial.print(" ");
-  Serial.print(accelCount[2]);
-  delay(10);
-  Serial.println();*/
+  Serial.print(",");
+  Serial.println(accelCount[2]);
+  //delay(10);
+  //Serial.println();
   
   // Now we'll calculate the accleration value into actual g's
   /*float accelG[3]; // Stores the accel values in G form
@@ -52,10 +54,12 @@ void readAccelData(int *destination)
 
   if(readRegisters(OUT_X_MSB, 6, rawData) == TIMEOUT_ERROR)  // Read the six raw data registers into data array
   {
-    //Restart the accel
-    Serial.println("Restarting accel communication");
+    Serial.print("Accel reponse timeout: ");
+    Serial.println(timeOutCounter);
+
     while(readRegisters(OUT_X_MSB, 6, rawData) == TIMEOUT_ERROR)
     {
+      //Restart the accel
       if(!initMMA8452()) //Test and intialize the MMA8452
       {
         clearDisplay();
@@ -75,7 +79,7 @@ void readAccelData(int *destination)
     lastThirdPass = 0;
   }
 
-  // Loop to calculate 12-bit ADC and g value for each axis
+  // Loop to calculate 12-bit raw accel value
   for(int i = 0; i < 3 ; i++)
   {
     int gCount = (rawData[i*2] << 8) | rawData[(i*2)+1];  //Combine the two 8 bit registers into one 12-bit number
@@ -102,11 +106,11 @@ boolean initMMA8452()
   byte c = readRegister(WHO_AM_I);  // Read WHO_AM_I register
   if (c == 0x2A) // WHO_AM_I should always be 0x2A
   {  
-    Serial.println("MMA8452Q is online...");
+    Serial.println("Accel initialized");
   }
   else
   {
-    Serial.println("Could not connect to MMA8452Q");
+    Serial.println("Could not connect to accel");
     return(false);
   }
 
@@ -153,7 +157,11 @@ byte readRegisters(byte addressToRead, int bytesToRead, byte * dest)
   long startTime = millis();  
   while(Wire.available() < bytesToRead) //Hang out until we get the # of bytes we expect
   {
-    if(millis() - startTime > MAXTIME) return(TIMEOUT_ERROR);
+    if(millis() - startTime > MAXTIME) 
+    {
+      timeOutCounter++;
+      return(TIMEOUT_ERROR);
+    }
   }
 
   for(int x = 0 ; x < bytesToRead ; x++)
