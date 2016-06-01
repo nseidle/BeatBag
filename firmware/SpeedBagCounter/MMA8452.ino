@@ -24,6 +24,7 @@ float getAccelData()
   int accelCount[3];  // Stores the 12-bit signed value
   readAccelData(accelCount);  // Read the x/y/z adc values
   
+  //Print the readings for logging to an OpenLog
   Serial.print(millis());
   Serial.print(",");
   Serial.print(accelCount[0]);
@@ -31,8 +32,6 @@ float getAccelData()
   Serial.print(accelCount[1]);
   Serial.print(",");
   Serial.println(accelCount[2]);
-  //delay(10);
-  //Serial.println();
   
   // Now we'll calculate the accleration value into actual g's
   /*float accelG[3]; // Stores the accel values in G form
