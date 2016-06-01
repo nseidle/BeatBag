@@ -38,8 +38,8 @@
  12/19/15 - Segment burned out. Power down display after 10 minutes of non-use.
  Use I2C, see if we can avoid the 'multiply by 10' display problem.
 
- 1/23/16 - Accel not reliable. Because the display is now also on the I2C but the pull-up resistors on the accel where
- not enough. Swapped out to new accel. Added 100ohm inline resistors to accel and 4.7k resistors from SDA/SCL to 5V.
+ 1/23/16 - Accel not reliable. Because the display is now also on the I2C the pull-up resistors on the accel where
+ not enough. Swapped out to new accel. Added 100 ohm inline resistors to accel and 4.7k resistors from SDA/SCL to 5V.
  Reinforced connection from accel to RedBoard.
 
  */
@@ -48,13 +48,7 @@
 
 #include <Wire.h> // Used for I2C
 
-//#include <SoftwareSerial.h> //Used to print to 7segment display
-//SoftwareSerial Serial7Segment(8, 7); //RX pin, TX pin
-
 #define DISPLAY_ADDRESS 0x71 //I2C address of OpenSegment display
-
-//#include <SD.h> //Used for data logging
-//File myFile;
 
 int hitCounter = 0; //Keeps track of the number of hits
 
@@ -109,17 +103,16 @@ void setup()
 
   clearDisplay();
   Wire.beginTransmission(DISPLAY_ADDRESS);
-  Wire.print("Accl");
+  Wire.print("Accl"); //Display an error until accel comes online
   Wire.endTransmission();
 
   while(!initMMA8452()) //Test and intialize the MMA8452
     ; //Do nothing
+
   clearDisplay();
   Wire.beginTransmission(DISPLAY_ADDRESS);
   Wire.print("0000");
   Wire.endTransmission();
-
-  //startSD(); //Init the SD card and create a log file
 
   lastPrint = millis();
   lastHitTime = millis();
@@ -140,15 +133,6 @@ void loop()
       digitalWrite(LED, LOW);
 
     lastPrint = millis();
-
-    /*secondsCounter++;
-    if(secondsCounter > 4)
-    {
-      myFile.flush(); //Record this file to SD
-      secondsCounter = 0;
-
-      Serial.println("File flush");
-    }*/
   }
 
   //See if we should power down the display due to inactivity
@@ -185,21 +169,6 @@ void loop()
 
   fourthPass = abs(fourthPass); //Get the absolute value of this heavily filtered value
 
-  /*myFile.print(millis()/1000.0, 3);
-  myFile.print(",");
-  myFile.print(currentMagnitude);
-  myFile.print(",");
-  myFile.print(firstPass);
-  myFile.print(",");
-  myFile.print(secondPass);
-  myFile.print(",");
-  myFile.print(thirdPass);
-  myFile.print(",");
-  myFile.print(fourthPass);
-  myFile.print(",");
-  myFile.print(hitCounter);
-  myFile.print(",");*/
-
   //See if this magnitude is large enough to care
   if (fourthPass > MIN_MAGNITUDE_THRESHOLD)
   {
@@ -226,18 +195,12 @@ void loop()
   //Check if we need to reset the counter and display
   if (digitalRead(resetButton) == LOW)
   {
+    //This breaks the file up so we can see where we hit the reset button
     Serial.println();
     Serial.println();
     Serial.println("Reset!");
     Serial.println();
     Serial.println();
-
-    //This breaks the file up so we can see where we hit the reset button
-    /*myFile.println();
-    myFile.println();
-    myFile.print("Reset!");
-    myFile.println();
-    myFile.println();*/
 
     hitCounter = 0;
 
@@ -253,52 +216,7 @@ void loop()
       delay(10);
     }
   }
-
-  //myFile.println();
-
-  //delay(10); //Use only if we have debug serial.print statements
 }
-
-/*void startSD()
-{
-  Serial.print("Initializing SD card...");
-  // On the Ethernet Shield, CS is pin 4. It's set as an output by default.
-  // Note that even if it's not used as the CS pin, the hardware SS pin
-  // (10 on most Arduino boards, 53 on the Mega) must be left as an output
-  // or the SD library functions will not work.
-   pinMode(10, OUTPUT);
-
-  if (!SD.begin(8)) {
-    Serial.println("initialization failed!");
-    return;
-  }
-  Serial.println("initialization done.");
-
-  char fileName[20];
-  int x;
-  for(x = 0 ; x < 255 ; x++)
-  {
-    sprintf(fileName, "baglog%d.txt", x);
-    if(!SD.exists(fileName)) break;
-  }
-  if(x == 255){
-    Serial.print("File error");
-    while(1);
-  }
-
-  myFile = SD.open(fileName, FILE_WRITE);
-
-  if (myFile){
-    Serial.print(fileName);
-    Serial.println(" is now open");
-  }
-  else
-  {
-    Serial.println("error opening file");
-    while(1);
-  }
-
-}*/
 
 //This function makes sure the display is at 57600
 void initDisplay()
@@ -369,6 +287,4 @@ void clearDisplay()
   Wire.write(' ');
 
   Wire.endTransmission(); //Stop I2C transmission
-
 }
-
