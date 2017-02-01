@@ -19,32 +19,23 @@ volatile unsigned int timeOutCounter = 0;
 
 //Checks the accelerometer and converts the readings to actual g values
 //Returns an array containing the float values.
-float getAccelData()
+void getAccelData(AccelData* dataPtr)
 {
   int accelCount[3];  // Stores the 12-bit signed value
   readAccelData(accelCount);  // Read the x/y/z adc values
+  dataPtr->timeStamp = millis();
+  dataPtr->minZFound = 0;
+  dataPtr->maxZFound = 0;
+  dataPtr->z = accelCount[2]; // Only using Z now
   
   //Print the readings for logging to an OpenLog
-  Serial.print(millis());
-  Serial.print(",");
-  Serial.print(accelCount[0]);
-  Serial.print(",");
-  Serial.print(accelCount[1]);
-  Serial.print(",");
-  Serial.println(accelCount[2]);
-  
-  // Now we'll calculate the accleration value into actual g's
-  /*float accelG[3]; // Stores the accel values in G form
-  for (int i = 0 ; i < 3 ; i++)
-    accelG[i] = (float) accelCount[i] / ((1<<12)/(2*GSCALE));  // get actual g value, this depends on scale being set
-
-  //Now calculate the overall magnitude of the combined vectors
-  float mag = sqrt( pow(accelG[0], 2) + pow(accelG[1], 2) + pow(accelG[2], 2));*/
-
-  //Calculate the overall magnitude of just the regular readings
-  float mag = sqrt( pow(accelCount[0], 2) + pow(accelCount[1], 2) + pow(accelCount[2], 2));
-  
-  return(mag);
+  /*SerialUSB.print(millis());
+  SerialUSB.print(",");
+  SerialUSB.print(accelCount[0]);
+  SerialUSB.print(",");
+  SerialUSB.print(accelCount[1]);
+  SerialUSB.print(",");
+  SerialUSB.println(accelCount[2]);*/
 }
 
 void readAccelData(int *destination)
@@ -53,8 +44,8 @@ void readAccelData(int *destination)
 
   if(readRegisters(OUT_X_MSB, 6, rawData) == TIMEOUT_ERROR)  // Read the six raw data registers into data array
   {
-    Serial.print("Accel reponse timeout: ");
-    Serial.println(timeOutCounter);
+    SerialUSB.print("Accel reponse timeout: ");
+    SerialUSB.println(timeOutCounter);
 
     while(readRegisters(OUT_X_MSB, 6, rawData) == TIMEOUT_ERROR)
     {
@@ -100,16 +91,14 @@ void readAccelData(int *destination)
 // http://www.freescale.com/webapp/sps/site/prod_summary.jsp?code=MMA8452Q
 boolean initMMA8452()
 {
-  wdt_reset(); //Pet the dog
-  
   byte c = readRegister(WHO_AM_I);  // Read WHO_AM_I register
   if (c == 0x2A) // WHO_AM_I should always be 0x2A
   {  
-    Serial.println("Accel initialized");
+    SerialUSB.println("Accel initialized");
   }
   else
   {
-    Serial.println("Could not connect to accel");
+    SerialUSB.println("Could not connect to accel");
     return(false);
   }
 
@@ -145,8 +134,6 @@ void MMA8452Active()
 // Read bytesToRead sequentially, starting at addressToRead into the dest byte array
 byte readRegisters(byte addressToRead, int bytesToRead, byte * dest)
 {
-  wdt_reset(); //Pet the dog
-  
   Wire.beginTransmission(MMA8452_ADDRESS);
   Wire.write(addressToRead);
   Wire.endTransmission(false); //endTransmission but keep the connection active
@@ -170,8 +157,6 @@ byte readRegisters(byte addressToRead, int bytesToRead, byte * dest)
 // Read a single byte from addressToRead and return it as a byte
 byte readRegister(byte addressToRead)
 {
-  wdt_reset(); //Pet the dog
-  
   Wire.beginTransmission(MMA8452_ADDRESS);
   Wire.write(addressToRead);
   Wire.endTransmission(false); //endTransmission but keep the connection active
